@@ -2,8 +2,6 @@ package com.dotcms.spa.page;
 
 import static com.dotmarketing.business.PermissionAPI.PERMISSION_READ;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +17,6 @@ import org.apache.commons.compress.utils.Lists;
 import com.beust.jcommander.internal.Maps;
 import com.dotcms.contenttype.business.ContentTypeAPI;
 import com.dotcms.enterprise.license.LicenseManager;
-import com.dotcms.rendering.velocity.services.PageContextBuilder;
 import com.dotcms.rendering.velocity.viewtools.ContainerWebAPI;
 import com.dotcms.rendering.velocity.viewtools.DotTemplateTool;
 import com.dotmarketing.beans.ContainerStructure;
@@ -47,7 +44,6 @@ import com.dotmarketing.util.PageMode;
 import com.dotmarketing.util.VelocityUtil;
 import com.dotmarketing.util.WebKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Table;
 import com.liferay.portal.model.User;
 
@@ -74,8 +70,14 @@ public class SPAResourceAPI {
         cTypeApi = APILocator.getContentTypeAPI(APILocator.systemUser());
     }
 
+    public String pageAsJson(final HttpServletRequest request, final HttpServletResponse response, final String uri) throws Exception {
+        
+        ObjectMapper mapper = com.dotcms.spa.page.JsonMapper.mapper;
 
-    public String mapForJson(final HttpServletRequest request, final HttpServletResponse response, final String uri) throws Exception {
+
+        return mapper.writeValueAsString(pageAsMap(request, response, uri));
+    }
+    public Map<String,Object> pageAsMap(final HttpServletRequest request, final HttpServletResponse response, final String uri) throws Exception {
 
         final PageMode pageMode = (request.getParameter(WebKeys.PAGE_MODE_PARAMETER) != null)
                 ? PageMode.get(request.getParameter(WebKeys.PAGE_MODE_PARAMETER))
@@ -166,7 +168,7 @@ public class SPAResourceAPI {
                     }
 
 
-                    uuid.put("cons", maps);
+                    uuid.put("contentlets", maps);
                     uuids.put("uuid-" + uniqueId, uuid);
 
                 }
@@ -195,25 +197,19 @@ public class SPAResourceAPI {
             holder.put("layout", layout);
 
             holder.put("containers", containers);
-            ObjectMapper mapper = com.dotcms.spa.page.JsonMapper.mapper;
-
-
-            return mapper.writeValueAsString(holder);
+            return holder;
         } catch (Exception e) {
             Logger.warn(this.getClass(), e.getMessage(), e);
         }
         return null;
     }
+    
+    
+    
+    
 
 
-    private Map<String, Object> getContext(PageContextBuilder context)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 
-        Field ctxField = context.getClass().getDeclaredField("ctxMap");
-        ctxField.setAccessible(true);
-        return (Map<String, Object>) ctxField.get(context);
-
-    }
 
 
 }
