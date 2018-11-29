@@ -1,6 +1,209 @@
 # README
 
-This is an example of how to create and load Jersey Based REST resources in dotCMS via OSGi 
+This plugin intercepts EDIT_MODE API calls in the backend of dotCMS and redirects them to an SPA (hosted elsewhere) to render the EDIT_MODE request.  The SPA will then be required to 1) do a static rendering of the app and 2) add the additional markup dotCMS requires to enable edit mode.  SPA suport can be enabled at the host level.  In order to do this, you need to add a text field to your host content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  In this you add the full url to your SPA that dotCMS will be proxying the request to, including the port.  If this value is not set, SPA EDIT_MODE support is disabled.
+
+When dotCMS receives an edit mode request for a page on a site with SPA support, dotCMS will build a json data object of the layout and contents on the page and `POST` that to the SPA url with the variable `dotPageData`.  The SPA needs to be built to accept this data and use it to statically render the SPA in that state, which dotCMS will read and return to edit mode.
+
+## Payload to SPA
+```json
+{
+	"layout": {
+		"pageWidth": null,
+		"width": null,
+		"layout": null,
+		"title": "anonymouslayout1543451733724",
+		"header": true,
+		"footer": true,
+		"body": {
+			"rows": [{
+				"columns": [{
+					"containers": [{
+						"identifier": "56bd55ea-b04b-480d-9e37-5d6f9217dcc3",
+						"uuid": "1"
+					}],
+					"widthPercent": 50,
+					"leftOffset": 1,
+					"preview": false,
+					"width": 6,
+					"left": 0
+				}, {
+					"containers": [{
+						"identifier": "56bd55ea-b04b-480d-9e37-5d6f9217dcc3",
+						"uuid": "2"
+					}],
+					"widthPercent": 50,
+					"leftOffset": 7,
+					"preview": false,
+					"width": 6,
+					"left": 6
+				}],
+				"identifier": 0,
+				"value": null,
+				"id": null
+			}]
+		},
+		"sidebar": {
+			"containers": [],
+			"location": "",
+			"width": "small",
+			"widthPercent": 20,
+			"preview": false
+		}
+	},
+	"containers": {
+		"56bd55ea-b04b-480d-9e37-5d6f9217dcc3": {
+			"container": {
+				"permissionId": "56bd55ea-b04b-480d-9e37-5d6f9217dcc3",
+				"modDate": "2018-04-06 13:52:54.0",
+				"code": "",
+				"notes": "    Large Column:\r\n    - Blog\r\n    - Events\r\n    - Generic\r\n    - Location\r\n    - Media\r\n    - News\r\n    - Documents\r\n    - Products",
+				"canAdd": "CONTENT,WIDGET,FORM",
+				"luceneQuery": "",
+				"title": "Large Column (lg-1)",
+				"type": "containers",
+				"showOnMenu": "false",
+				"inode": "e58e92b3-7135-461b-b56b-04ff143a389b",
+				"archived": "false",
+				"preLoop": "<div class=\"large-column\">",
+				"working": "true",
+				"locked": "true",
+				"friendlyName": "Large body column container",
+				"live": "true",
+				"iDate": "2018-04-06 13:52:54.0",
+				"owner": null,
+				"useDiv": "false",
+				"versionType": "containers",
+				"identifier": "56bd55ea-b04b-480d-9e37-5d6f9217dcc3",
+				"new": "false",
+				"permissionType": "com.dotmarketing.portlets.containers.model.Container",
+				"staticify": "false",
+				"canManageContainer": true,
+				"sortContentletsBy": "",
+				"maxContentlets": "25",
+				"acceptTypes": "WIDGET,FORM,Document,Blog,webPageContent,Products,News,Media,calendarEvent,Location",
+				"IDate": "2018-04-06 13:52:54.0",
+				"versionId": "56bd55ea-b04b-480d-9e37-5d6f9217dcc3",
+				"deleted": "false",
+				"parentPermissionable": "false",
+				"modUser": "dotcms.org.1",
+				"sortOrder": "0",
+				"name": "Large Column (lg-1)",
+				"categoryId": "e58e92b3-7135-461b-b56b-04ff143a389b",
+				"postLoop": "</div>"
+			},
+			"uuids": {
+				"uuid-1": {
+					"cons": [{
+						"owner": "dotcms.org.1",
+						"identifier": "735c44a5-3e6b-4047-a8c3-8ea9146e1762",
+						"nullProperties": [],
+						"modDate": 1532523929000,
+						"canEdit": true,
+						"languageId": 1,
+						"title": "Bear Mountain Lodge Description",
+						"body": "<p>Bear Mountain in Colorado offers the finest skiing conditions in the world. We call it Private Powder and it's here exclusively for our Members, their families, clients and invited guests.</p>\n<p>Arguably, the most exclusive ski resort in the world, offering something you can't get anywhere else. You can be super-rich and super-safe all at the same time. It's the only place in the world where you can ski without bodyguards. That's not to say there aren't any here; resort security is handled by former US Secret Service Agents. While most resorts have 'mountain huts' we have 'Sugar Shacks', where you can tuck in to homemade sweet treats and gourmet coffee.</p>\n<p>Apres-ski: Take a private snow cat dinner excursion to Timberline Lodge or combine dinner with a spot of night skiing at Rainbow Lodge.</p>\n<hr />\n<h3>Getting Here</h3>\n<div class=\"row\">\n<div class=\"col-md-5 d-none d-md-block d-lg-block d-xl-block\">\n<div style=\"text-align: center;\"><img class=\"img-fluid\" src=\"/bear-mountain/images/airport.jpg\" /></div>\n</div>\n<div class=\"col-md-7 col-sm-12\"><address><strong>Bear Lodge Private Airport</strong><br /> 2300 Claw Circle<br />Bear Moutain, CO 80487<br /> <abbr title=\"Phone\">P:</abbr> 615.620.2050</address></div>\n</div>",
+						"baseType": "CONTENT",
+						"inode": "2587dd81-fe55-4ac1-82c6-35706dd665fb",
+						"folder": "SYSTEM_FOLDER",
+						"__DOTNAME__": "Bear Mountain Lodge Description",
+						"disabledWYSIWYG": [],
+						"sortOrder": 0,
+						"modUser": "dotcms.org.1",
+						"host": "48190c8c-42c4-46af-8d1a-0cd5db894797",
+						"lastReview": 1532523929000,
+						"stInode": "2a3e91e4-fbbf-4876-8c5b-2233c1739b05"
+					}]
+				},
+				"uuid-2": {
+					"cons": [{
+						"owner": "dotcms.org.1",
+						"identifier": "767509b1-2392-4661-a16b-e0e31ce27719",
+						"nullProperties": [],
+						"modDate": 1532452228000,
+						"canEdit": true,
+						"languageId": 1,
+						"title": "About Quest",
+						"body": "<h2>About Us</h2>\n<p><img src=\"/dA/7de092d3-d051/300w/custom-house.jpg\" class=\"img-fluid\" width=\"300\" height=\"177\" style=\"float: right; margin: 10px;\" /></p>\n<p>Neque sit amet fermentum vulputate, arcu augue eleifend diam, malesuada molestie quam nibh at neque. In non risus at felis adipiscing molestie ac sed diam. Vivamus sit amet purus at libero pellentesque sagittis. Integer a enim turpis, vitae dignissim dui. Nulla eu leo id sapien facilisis pulvinar non quis justo. Morbi tempor, est quis elementum euismod, nibh metus faucibus enim, a viverra mi massa sit amet dui. Aenean id sapien mi, vel dapibus enim. Duis diam erat, malesuada sed fringilla non, rhoncus eget mauris. Praesent sit amet orci purus. Mauris hendrerit lectus ut justo aliquam eleifend. Curabitur bibendum congue luctus.</p>\n<p>Nulla rutrum facilisis odio sed interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus risus libero, cursus nec iaculis eget, pretium et augue. Proin ultricies dapibus elit et ornare. Phasellus feugiat suscipit leo. Morbi eu mi volutpat quam aliquam fringilla vitae vitae libero. Duis convallis dapibus molestie. In egestas lorem vitae eros varius adipiscing. &mdash;&nbsp;Timothy Brigham, CEO Quest Financial</p>\n<p></p>",
+						"baseType": "CONTENT",
+						"inode": "f6406747-0220-41fb-86e4-32bce21a8822",
+						"folder": "SYSTEM_FOLDER",
+						"__DOTNAME__": "About Quest",
+						"disabledWYSIWYG": [],
+						"sortOrder": 0,
+						"modUser": "dotcms.org.1",
+						"host": "48190c8c-42c4-46af-8d1a-0cd5db894797",
+						"lastReview": 1532028912000,
+						"stInode": "2a3e91e4-fbbf-4876-8c5b-2233c1739b05"
+					}]
+				}
+			}
+		}
+	},
+	"page": {
+		"template": "0d0a8c6b-bcf9-4f16-bbda-c7f22c24fcbf",
+		"modDate": 1543451770000,
+		"extension": "page",
+		"cachettl": "15",
+		"contentEditable": false,
+		"pageURI": "/pages/demo-page",
+		"description": "Demo",
+		"mimeType": "application/dotpage",
+		"title": "Demo",
+		"type": "htmlpage",
+		"httpsRequired": false,
+		"inode": "7ae34848-a606-499d-91eb-22072a5b4f5d",
+		"disabledWYSIWYG": [],
+		"permissions": [1, 2, 4, 8, 16],
+		"countryCode": "US",
+		"isLocked": false,
+		"host": "75a7e2c2-d5e2-481f-81f0-ac9a6e551de9",
+		"lastReview": 1543443163000,
+		"working": true,
+		"locked": false,
+		"stInode": "c541abb1-69b3-4bc5-8430-5e09e5239cc8",
+		"friendlyName": "Demo",
+		"live": true,
+		"owner": "dotcms.org.1",
+		"identifier": "60da4d73-a7b0-44c2-a5d1-482705704628",
+		"nullProperties": [],
+		"friendlyname": "Demo",
+		"isContentlet": true,
+		"wfActionMapList": [{
+			"name": "Unpublish",
+			"icon": "workflowIcon",
+			"hasPushPublishActionlet": false,
+			"id": "38efc763-d78f-4e4b-b092-59cd8c579b93",
+			"requiresCheckout": false,
+			"wfActionNameStr": "Unpublish",
+			"commentable": false,
+			"assignable": false
+		}, {
+			"name": "Copy",
+			"icon": "workflowIcon",
+			"hasPushPublishActionlet": false,
+			"id": "134a50d3-782d-43de-8877-42c0be1c86a4",
+			"requiresCheckout": false,
+			"wfActionNameStr": "Copy",
+			"commentable": false,
+			"assignable": false
+		}],
+		"languageId": 1,
+		"statusIcons": "<span class='greyDotIcon' style='opacity:.4'></span><span class='liveIcon'></span>",
+		"languageCode": "en",
+		"url": "demo-page",
+		"languageFlag": "en_US",
+		"modUserName": "Admin User",
+		"hasLiveVersion": true,
+		"folder": "f6282c7a-484c-4733-a8ab-1f3a3ce1b5d6",
+		"deleted": false,
+		"sortOrder": 0,
+		"modUser": "dotcms.org.1",
+		"name": "demo-page",
+		"pageUrl": "demo-page"
+	}
+}
+```
+
 
 ## How to build this example
 
@@ -25,62 +228,3 @@ This will build two jars in the `build/libs` directory: a bundle fragment (in or
 
     Undeploy the bundle jars using the dotCMS UI (*CMS Admin->Dynamic Plugins->Undeploy*).
 
-## How to create a bundle plugin for a rest resource
-
-In order to create this OSGI plugin, you must create a `META-INF/MANIFEST` to be inserted into OSGI jar.
-This file is being created for you by Gradle. If you need you can alter our config for this but in general our out of the box config should work.
-The Gradle plugin uses BND to generate the Manifest. The main reason you need to alter the config is when you need to exclude a package you are including on your Bundle-ClassPath
-
-If you are building the MANIFEST on your own or desire more info on it below is a description of what is required in this MANIFEST you must specify (see template plugin):
-
-```
-    Bundle-Name: The name of your bundle
-    Bundle-SymbolicName: A short an unique name for the bundle
-    Bundle-Activator: Package and name of your Activator class (example: com.dotmarketing.osgi.override.Activator)
-    Export-Package: Declares the packages that are visible outside the plugin. Any package not declared here has visibility only within the bundle.
-    Import-Package: This is a comma separated list of the names of packages to import. In this list there must be the packages that you are using inside your osgi bundle plugin and are exported and exposed by the dotCMS runtime.
-```
-
-## Beware (!)
-
-In order to work inside the Apache Felix OSGI runtime, the import and export directive must be bidirectional, there are two ways to accomplish this:
-
-* **Exported Packages**
-
-    The dotCMS must declare the set of packages that will be available to the OSGI plugins by changing the file: *dotCMS/WEB-INF/felix/osgi-extra.conf*.
-This is possible also using the dotCMS UI (*CMS Admin->Dynamic Plugins->Exported Packages*).
-
-    Only after that exported packages are defined in this list, a plugin can Import the packages to use them inside the OSGI blundle.
-    
-* **Fragment**
-
-    A Bundle fragment, is a bundle whose contents are made available to another bundles exporting 3rd party libraries from dotCMS.
-One notable difference is that fragments do not participate in the lifecycle of the bundle, and therefore cannot have an Bundle-Activator.
-As it not contain a Bundle-Activator a fragment cannot be started so after deploy it will have its state as Resolved and NOT as Active as a normal bundle plugin.
-
----
-## How to test
-
-Once installed, you can access this resource by (this assumes you are on localhost)
-
-`http://localhost:8080/api/example`
-
-or this, which requires an dotcms user to access(See authentication below)
-
-`http://localhost:8080/api/example/auth`
-
-You can try the put and post resources by
-
-`curl -XPUT http://localhost:8080/api/example`
-
-`curl -XPOST http://localhost:8080/api/example`
-
-## Authentication
-
-This API supports the same REST auth infrastructure as other 
-rest apis in dotcms. There are 4 ways to authenticate.
-
-* user/xxx/password/yyy in the URI
-* basic http/https authentication (base64 encoded)
-* DOTAUTH header similar to basic auth and base64 encoded, e.g. setHeader("DOTAUTH", base64.encode("admin@dotcms.com:admin"))
-* Session based (form based login) for frontend or backend logged in user
