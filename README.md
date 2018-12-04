@@ -93,7 +93,7 @@ When dotCMS receives an edit mode request for a page on a site with SPA support,
 			},
 			"uuids": {
 				"uuid-1": {
-					"cons": [{
+					"contentlets": [{
 						"owner": "dotcms.org.1",
 						"identifier": "735c44a5-3e6b-4047-a8c3-8ea9146e1762",
 						"nullProperties": [],
@@ -115,7 +115,7 @@ When dotCMS receives an edit mode request for a page on a site with SPA support,
 					}]
 				},
 				"uuid-2": {
-					"cons": [{
+					"contentlets": [{
 						"owner": "dotcms.org.1",
 						"identifier": "767509b1-2392-4661-a16b-e0e31ce27719",
 						"nullProperties": [],
