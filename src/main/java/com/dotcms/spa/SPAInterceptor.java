@@ -3,13 +3,20 @@ package com.dotcms.spa;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.compress.utils.Lists;
+
+import com.beust.jcommander.internal.Maps;
 import com.dotcms.business.CloseDBIfOpened;
 import com.dotcms.filters.interceptor.Result;
 import com.dotcms.filters.interceptor.WebInterceptor;
@@ -18,13 +25,21 @@ import com.dotcms.spa.page.JsonMapper;
 import com.dotcms.spa.page.SPAResourceAPI;
 import com.dotcms.spa.proxy.ProxyResponse;
 import com.dotcms.spa.proxy.ProxyTool;
+import com.dotcms.spa.serializer.HTMLPageAssetRenderedSerializer;
 import com.dotmarketing.beans.Host;
+import com.dotmarketing.beans.MultiTree;
 import com.dotmarketing.business.APILocator;
+import com.dotmarketing.business.DotStateException;
+import com.dotmarketing.business.PermissionAPI;
 import com.dotmarketing.business.web.UserWebAPI;
 import com.dotmarketing.business.web.WebAPILocator;
+import com.dotmarketing.exception.DotDataException;
 import com.dotmarketing.exception.DotRuntimeException;
+import com.dotmarketing.exception.DotSecurityException;
+import com.dotmarketing.portlets.contentlet.model.Contentlet;
+import com.dotmarketing.portlets.htmlpageasset.business.render.ContainerRendered;
 import com.dotmarketing.portlets.htmlpageasset.business.render.page.HTMLPageAssetRendered;
-import com.dotmarketing.portlets.htmlpageasset.business.render.page.HTMLPageAssetRenderedSerializer;
+
 import com.dotmarketing.portlets.htmlpageasset.business.render.page.PageView;
 import com.dotmarketing.portlets.languagesmanager.business.LanguageAPI;
 import com.dotmarketing.util.PageMode;
@@ -32,6 +47,7 @@ import com.dotmarketing.util.UtilMethods;
 import com.dotmarketing.util.WebKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Table;
 import com.liferay.portal.model.User;
 
 /**
@@ -40,7 +56,7 @@ import com.liferay.portal.model.User;
  */
 public class SPAInterceptor implements WebInterceptor {
 
-
+    public static final String PROXY_EDIT_MODE_URL_VAR="proxyEditModeUrl";
     private static final long serialVersionUID = -5760933171181804395L;
     private static final ProxyTool proxy = new ProxyTool();
     LanguageAPI lapi = APILocator.getLanguageAPI();
@@ -64,7 +80,7 @@ public class SPAInterceptor implements WebInterceptor {
         String uri = request.getRequestURI();
 
         Optional<String> proxyUrl = proxyUrl(request);
-        if (!proxyUrl.isPresent()) {
+        if (!proxyUrl.isPresent() || mode == PageMode.LIVE) {
             return Result.NEXT;
         }
         System.err.println("GOT ONE -->" + request.getRequestURI());
@@ -77,6 +93,8 @@ public class SPAInterceptor implements WebInterceptor {
             uri = uri.replace(API_CALL, "");
 
             String postJson = new SPAResourceAPI().pageAsJson(request, response, uri);
+
+
             Map<String, String> params = ImmutableMap.of("dotPageData", postJson);
             String responseStr = null;
             ProxyResponse pResponse = proxy.sendPost(proxyUrl.get(), params);
@@ -87,14 +105,13 @@ public class SPAInterceptor implements WebInterceptor {
                     (HTMLPageAssetRendered) APILocator.getHTMLPageAssetRenderedAPI().getPageRendered(request, response, user, uri, mode);
 
 
-            PageView pageView = new HTMLPageAssetRendered(pageRendered.getSite(), pageRendered.getTemplate(), pageRendered.getContainers(),
+            HTMLPageAssetRendered pageView = new HTMLPageAssetRendered(pageRendered.getSite(), pageRendered.getTemplate(), pageRendered.getContainers(),
                     pageRendered.getPageInfo(), pageRendered.getLayout(), responseStr, pageRendered.isCanCreateTemplate(),
                     pageRendered.isCanEditTemplate(), pageRendered.getViewAs());
             HTMLPageAssetRenderedSerializer serializer = new HTMLPageAssetRenderedSerializer();
 
-            Method getObjectMapMethod = HTMLPageAssetRenderedSerializer.class.getDeclaredMethod("getObjectMap", PageView.class);
-            getObjectMapMethod.setAccessible(true);
-            Map<String, Object> newMap = (Map<String, Object>) getObjectMapMethod.invoke(serializer, pageView);
+
+            Map<String, Object> newMap = injectContentsIntoPageView(pageView, user);
 
 
             ResponseEntityView view = new ResponseEntityView(newMap);
@@ -102,12 +119,18 @@ public class SPAInterceptor implements WebInterceptor {
 
             response.setContentType("application/json");
             ObjectMapper mapper = JsonMapper.mapper;
+       
+            
+            if (request.getParameter("showDotPageData") != null) {
+                response.getWriter().write(postJson);
+            } else {
+                response.getWriter().write(mapper.writeValueAsString(view));
+            }
 
-            response.getWriter().write(mapper.writeValueAsString(view));
 
             return Result.SKIP_NO_CHAIN;
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
 
@@ -122,8 +145,6 @@ public class SPAInterceptor implements WebInterceptor {
     }
 
 
-
-
     private Optional<String> proxyUrl(HttpServletRequest request) {
 
 
@@ -135,14 +156,13 @@ public class SPAInterceptor implements WebInterceptor {
 
 
         Host host = this.getCurrentHost(request);
-        String proxyUrl = host.getStringProperty("proxyEditModeUrl");
+        String proxyUrl = host.getStringProperty(PROXY_EDIT_MODE_URL_VAR);
 
 
         return Optional.ofNullable(proxyUrl);
 
 
     }
-
 
 
     @CloseDBIfOpened
@@ -183,6 +203,65 @@ public class SPAInterceptor implements WebInterceptor {
         } catch (Exception e) {
             throw new DotRuntimeException(e);
         }
+    }
+    
+    
+    public Map<String, Object> injectContentsIntoPageView(HTMLPageAssetRendered pageView, final User user)
+            throws DotDataException, DotSecurityException {
+
+
+        HTMLPageAssetRenderedSerializer serializer = new HTMLPageAssetRenderedSerializer();
+
+
+        Map<String, Object> newMap = serializer.getObjectMap(pageView);
+
+
+        final Table<String, String, Set<String>> pageContents = APILocator.getMultiTreeAPI()
+                .getPageMultiTrees(pageView.getPageInfo().getPage(), pageView.getViewAs().getPageMode().showLive);
+
+        if (!pageContents.isEmpty()) {
+
+            for (final String containerId : pageContents.rowKeySet()) {
+                Map<String, Object> uuidsRaw = Maps.newHashMap();
+                for (final String uniqueId : pageContents.row(containerId).keySet()) {
+                    final Set<String> cons = pageContents.get(containerId, uniqueId);
+
+                    Map<String, Object> uuidRaw = Maps.newHashMap();
+
+                    List<Contentlet> contentlets = cons.stream().map(conId -> {
+                        try {
+                            return APILocator.getContentletAPI().findContentletByIdentifierAnyLanguage(conId);
+                        } catch (Exception e) {
+                            throw new DotStateException(e);
+                        }
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+
+                    List<Map<String, Object>> maps = Lists.newArrayList();
+                    for (Contentlet c : contentlets) {
+                        Map<String, Object> map = Maps.newHashMap();
+                        map.putAll(c.getMap());
+                        map.put("baseType", c.getContentType().baseType().name());
+                        map.put("canEdit", APILocator.getPermissionAPI().doesUserHavePermission(c, PermissionAPI.PERMISSION_EDIT, user));
+                        maps.add(map);
+                    }
+
+
+                    // uuidRaw.put("contentlets", maps);
+
+                    uuidsRaw.put("uuid-" + uniqueId, maps);
+                }
+                Map<String, Object> map =(Map<String, Object>)newMap.get("containers");
+                map =(Map<String, Object>)map.get(containerId);
+                map.put("raw", uuidsRaw);
+                
+                //(Map<String, Object>newMap.get("containers")).get(containerId).
+                
+                
+            }
+        }
+
+
+        return newMap;
     }
 
 }
