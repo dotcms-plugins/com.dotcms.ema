@@ -7,55 +7,43 @@ import com.dotcms.contenttype.model.field.DataTypes;
 import com.dotcms.contenttype.model.field.Field;
 import com.dotcms.contenttype.model.field.ImmutableTextField;
 import com.dotcms.contenttype.model.type.ContentType;
-import com.dotcms.filters.interceptor.FilterWebInterceptorProvider;
-import com.dotcms.filters.interceptor.WebInterceptorDelegate;
+import com.dotcms.spa.util.FilterOrder;
+import com.dotcms.spa.util.TomcatServletFilterUtil;
 import com.dotmarketing.business.APILocator;
-import com.dotmarketing.filters.AutoLoginFilter;
 import com.dotmarketing.osgi.GenericBundleActivator;
-import com.dotmarketing.util.Config;
 
 public class Activator extends GenericBundleActivator {
-
+    final static String FILTER_NAME = "HubspotFilter";
     public void start(BundleContext context) throws Exception {
 
-        final FilterWebInterceptorProvider filterWebInterceptorProvider = FilterWebInterceptorProvider.getInstance(Config.CONTEXT);
-        final WebInterceptorDelegate delegate = filterWebInterceptorProvider.getDelegate(AutoLoginFilter.class);
 
-        if (null != delegate) {
-            System.out.println("Adding the SPAInterceptor");
-            delegate.addFirst(new SPAInterceptor());
-        }
-
+        new TomcatServletFilterUtil().addFilter(FILTER_NAME, new SPAFilter(), FilterOrder.FIRST, "/api/v1/page/render/*");
         
         ContentType host = APILocator.getContentTypeAPI(APILocator.systemUser()).find("host");
-        Field proxyUrlField = host.fieldMap().get(SPAInterceptor.PROXY_EDIT_MODE_URL_VAR);
+        Field proxyUrlField = host.fieldMap().get(SPAFilter.PROXY_EDIT_MODE_URL_VAR);
         
         if(proxyUrlField==null) {
             System.out.println("Adding Proxy URL Field to Host Structure");
             proxyUrlField = ImmutableTextField.builder()
                     .dataType(DataTypes.TEXT)
                     .name("Proxy Url for Edit Mode")
-                    .variable(SPAInterceptor.PROXY_EDIT_MODE_URL_VAR)
+                    .variable(SPAFilter.PROXY_EDIT_MODE_URL_VAR)
                     .sortOrder(host.fields().size())
                     .contentTypeId(host.id())
                     .build();
             APILocator.getContentTypeFieldAPI().save(proxyUrlField, APILocator.systemUser());
         }
         
-        
+        System.out.println("Installing the SPAFilter");
         
 
     }
 
     public void stop(BundleContext context) throws Exception {
 
-        final FilterWebInterceptorProvider filterWebInterceptorProvider = FilterWebInterceptorProvider.getInstance(Config.CONTEXT);
-        final WebInterceptorDelegate delegate = filterWebInterceptorProvider.getDelegate(AutoLoginFilter.class);
+        new TomcatServletFilterUtil().removeFilter(FILTER_NAME);
 
-        if (null != delegate) {
-            System.out.println("Removing the SPAInterceptor");
-            delegate.remove(SPAInterceptor.class.getName(), true);
-        }
+
     }
 
 }
