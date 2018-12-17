@@ -63,7 +63,6 @@ public class Activator extends GenericBundleActivator {
                 filterWebInterceptorProvider.getDelegate(InterceptorFilter.class);
 
         delegate.remove(this.interceptorName, true);
-        delegate.reverseOrderForPostInvoke(true);
     }
 
 }
