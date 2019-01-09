@@ -27,6 +27,7 @@ public class Activator extends GenericBundleActivator {
             proxyUrlField = ImmutableTextField.builder()
                     .dataType(DataTypes.TEXT)
                     .name("Proxy Url for Edit Mode")
+                    .hint("Set this value to the full url that will receive the page-as-a-service payload as an HTTP POST, e.g. https://spa.dotcms.com/editMode")
                     .variable(SPAFilter.PROXY_EDIT_MODE_URL_VAR)
                     .sortOrder(host.fields().size())
                     .contentTypeId(host.id())

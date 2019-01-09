@@ -76,9 +76,12 @@ public class SPAFilter implements Filter {
             if (pResponse.getResponseCode() == 200) {
                 responseStr = new String(pResponse.getResponse());
             }
+            else {
+                responseStr = new String("bad response from rendering server.  Are you sure it is running?");
+            }
 
             json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
-
+            json.getJSONObject("entity").getJSONObject("page").put("remoteRendered", true);
             response.setContentType("application/json");
 
             response.getWriter().write(json.toString());
@@ -106,6 +109,9 @@ public class SPAFilter implements Filter {
 
 
         Host host = this.getCurrentHost(request);
+        if(host==null) {
+            return Optional.empty();
+        }
         String proxyUrl = host.getStringProperty(PROXY_EDIT_MODE_URL_VAR);
 
 
