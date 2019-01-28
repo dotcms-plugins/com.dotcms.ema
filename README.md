@@ -1,4 +1,4 @@
-# Edit Mode Anywhere
+# Edit Mode Anywhere - EMA
 
 This plugin intercepts EDIT_MODE API calls in the backend of dotCMS and proxies them to another site/server (hosted elsewhere) to render the EDIT_MODE request.  To enable Edit Mode Anywhere , your app should do a static/isomorphic rendering of the app at a given page route and 2) add the additional markup dotCMS requires to enable edit mode.  In dotCMS EMA suport can be enabled at the host level.  In order to do this, you need to add a text field to your host content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  In this you add the full url to your rendering server that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled.
 
