@@ -4,25 +4,21 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.dotcms.business.CloseDBIfOpened;
+import com.dotcms.ema.proxy.MockHttpCaptureResponse;
 import com.dotcms.ema.proxy.ProxyResponse;
 import com.dotcms.ema.proxy.ProxyTool;
+import com.dotcms.filters.interceptor.Result;
+import com.dotcms.filters.interceptor.WebInterceptor;
 import com.dotmarketing.beans.Host;
 import com.dotmarketing.business.APILocator;
 import com.dotmarketing.business.web.UserWebAPI;
 import com.dotmarketing.business.web.WebAPILocator;
 import com.dotmarketing.exception.DotRuntimeException;
-import com.dotmarketing.portlets.languagesmanager.business.LanguageAPI;
 import com.dotmarketing.util.Logger;
 import com.dotmarketing.util.PageMode;
 import com.dotmarketing.util.UtilMethods;
@@ -31,70 +27,67 @@ import com.dotmarketing.util.json.JSONObject;
 import com.google.common.collect.ImmutableMap;
 import com.liferay.portal.model.User;
 
-public class EMAFilter implements Filter {
+public class EMAWebInterceptor  implements WebInterceptor{
 
-    public static final String PROXY_EDIT_MODE_URL_VAR = "proxyEditModeUrl";
+    public  static final String      PROXY_EDIT_MODE_URL_VAR = "proxyEditModeUrl";
+    private static final String      API_CALL                = "/api/v1/page/render";
+    private static final ProxyTool   proxy                   = new ProxyTool();
 
-    private static final ProxyTool proxy = new ProxyTool();
-    LanguageAPI lapi = APILocator.getLanguageAPI();
-
-    final String API_CALL = "/api/v1/page/render";
 
     @Override
-    public void init(FilterConfig config) throws ServletException {
-
-
+    public String[] getFilters() {
+        return new String[] {
+                API_CALL + "*"
+        };
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
+    public Result intercept(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
 
-        PageMode mode = PageMode.get(request);
+        final PageMode mode             = PageMode.get(request);
+        final Optional<String> proxyUrl = this.proxyUrl(request);
 
-        Optional<String> proxyUrl = proxyUrl(request);
         if (!proxyUrl.isPresent() || mode == PageMode.LIVE) {
-            chain.doFilter(req, res);
-            return;
+            return Result.NEXT;
         }
-        System.err.println("GOT AN SPA Call -->" + request.getRequestURI());
+
+        Logger.info(this.getClass(), "GOT AN EMA Call -->" + request.getRequestURI());
+
+        return new Result.Builder().wrap(new MockHttpCaptureResponse(response)).next().build();
+    }
+
+
+    @Override
+    public boolean afterIntercept(final HttpServletRequest request, final HttpServletResponse response) {
 
         try {
 
-            MockHttpCaptureResponse mockResponse = new MockHttpCaptureResponse(response);
+            if (response instanceof MockHttpCaptureResponse) {
 
-            chain.doFilter(req, mockResponse);
+                final Optional<String> proxyUrl            = proxyUrl(request);
+                final MockHttpCaptureResponse mockResponse = (MockHttpCaptureResponse)response;
+                final String postJson                      = new String(mockResponse.getBytes());
+                final JSONObject json                      = new JSONObject(postJson);
+                final Map<String, String> params           = ImmutableMap.of("dotPageData", postJson);
 
-            String postJson = new String(mockResponse.getBytes());
+                String responseStr = null;
+                final ProxyResponse pResponse = proxy.sendPost(proxyUrl.get(), params);
 
-            JSONObject json = new JSONObject(postJson);
+                if (pResponse.getResponseCode() == 200) {
+                    responseStr = new String(pResponse.getResponse());
+                }
 
-            Map<String, String> params = ImmutableMap.of("dotPageData", postJson);
-            String responseStr = null;
-            ProxyResponse pResponse = proxy.sendPost(proxyUrl.get(), params);
-            if (pResponse.getResponseCode() == 200) {
-                responseStr = new String(pResponse.getResponse());
+                json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
+
+                response.setContentType("application/json");
+
+                response.getWriter().write(json.toString());
             }
-            else {
-                responseStr = new String("bad response from rendering server.  Are you sure it is running?");
-            }
-
-            json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
-            json.getJSONObject("entity").getJSONObject("page").put("remoteRendered", true);
-            response.setContentType("application/json");
-
-            response.getWriter().write(json.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-
-    }
-
-    @Override
-    public void destroy() {
-        Logger.info(EMAFilter.class.getName(), "destroy:" + this.getClass().getName());
+        return true;
     }
 
 
@@ -160,6 +153,7 @@ public class EMAFilter implements Filter {
             throw new DotRuntimeException(e);
         }
     }
+
 
 
 }

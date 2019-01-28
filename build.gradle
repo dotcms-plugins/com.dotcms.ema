@@ -10,7 +10,9 @@ repositories {
 }
 
 dependencies {
-    compile('com.dotcms:dotcms:5.0.3') { transitive = true }
+    //compile('com.dotcms:dotcms:5.1.0') { transitive = true }
+
+    compile fileTree(dir: '/Users/will/git/dotcms5/releases/dotcms-master-5.1.0/dotserver/tomcat-8.5.32/webapps/ROOT/WEB-INF/lib', include: '*.jar')
     compile 'org.apache.tomcat:tomcat-catalina:8.5.24'
 
 }
@@ -38,7 +40,7 @@ jar.finalizedBy 'fragmentJar'
 /////////////////////////
 
 ext {
-    bundleName = "SPA Interceptor fragment"
+    bundleName = "EMA Interceptor fragment"
     bundleDescription = "dotCMS - EMA Interceptor fragment"
     fragmentHost = "system.bundle; extension:=framework"
     bundleSymbolicName = "" //Auto generated based on the plugin jar

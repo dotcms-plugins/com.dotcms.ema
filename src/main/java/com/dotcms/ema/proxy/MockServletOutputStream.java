@@ -1,4 +1,4 @@
-package com.dotcms.ema;
+package com.dotcms.ema.proxy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
