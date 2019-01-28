@@ -24,9 +24,9 @@ jar {
     manifest {
         attributes (
                 'Bundle-Vendor': 'dotCMS',
-                'Bundle-Description': 'dotCMS - SPA Enabler',
+                'Bundle-Description': 'dotCMS - EMA Enabler',
                 'Bundle-DocURL': 'https://dotcms.com/',
-                'Bundle-Activator': 'com.dotcms.spa.Activator',
+                'Bundle-Activator': 'com.dotcms.ema.Activator',
                 'Import-Package': '*;version=0'
         )
     }
@@ -39,7 +39,7 @@ jar.finalizedBy 'fragmentJar'
 
 ext {
     bundleName = "SPA Interceptor fragment"
-    bundleDescription = "dotCMS - SPA Interceptor fragment"
+    bundleDescription = "dotCMS - EMA Interceptor fragment"
     fragmentHost = "system.bundle; extension:=framework"
     bundleSymbolicName = "" //Auto generated based on the plugin jar
     bundleVersion = "" //Auto generated based on the plugin jar

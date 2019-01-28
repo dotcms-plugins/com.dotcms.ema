@@ -1,4 +1,4 @@
-package com.dotcms.spa.serializer;
+package com.dotcms.ema.serializer;
 
 
 import com.dotmarketing.portlets.htmlpageasset.business.render.page.HTMLPageAssetInfo;

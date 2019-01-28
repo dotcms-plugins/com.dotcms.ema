@@ -1,4 +1,4 @@
-package com.dotcms.spa.page;
+package com.dotcms.ema.page;
 
 import java.util.Map;
 

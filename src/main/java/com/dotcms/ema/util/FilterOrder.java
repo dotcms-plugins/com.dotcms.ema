@@ -1,4 +1,4 @@
-package com.dotcms.spa.util;
+package com.dotcms.ema.util;
 
 public enum FilterOrder {
   FIRST, LAST;

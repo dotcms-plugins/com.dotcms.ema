@@ -1,4 +1,4 @@
-package com.dotcms.spa;
+package com.dotcms.ema;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

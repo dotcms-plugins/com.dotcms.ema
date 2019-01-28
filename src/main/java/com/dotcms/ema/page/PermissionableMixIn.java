@@ -1,4 +1,4 @@
-package com.dotcms.spa.page;
+package com.dotcms.ema.page;
 
 import com.dotmarketing.business.Permissionable;
 import com.fasterxml.jackson.annotation.JsonIgnore;

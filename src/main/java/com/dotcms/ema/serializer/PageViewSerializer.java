@@ -1,4 +1,4 @@
-package com.dotcms.spa.serializer;
+package com.dotcms.ema.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,7 +9,7 @@ import com.dotmarketing.exception.DotRuntimeException;
 import com.dotmarketing.portlets.htmlpageasset.business.render.page.PageView;
 import com.dotmarketing.portlets.templates.model.Template;
 
-import com.dotcms.spa.page.JsonMapper;
+import com.dotcms.ema.page.JsonMapper;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.CharArrayReader;

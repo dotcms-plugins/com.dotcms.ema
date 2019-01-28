@@ -1,4 +1,4 @@
-package com.dotcms.spa.serializer;
+package com.dotcms.ema.serializer;
 
 import java.util.Map;
 

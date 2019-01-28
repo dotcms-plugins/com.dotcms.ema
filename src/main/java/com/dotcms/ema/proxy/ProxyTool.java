@@ -1,4 +1,4 @@
-package com.dotcms.spa.proxy;
+package com.dotcms.ema.proxy;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

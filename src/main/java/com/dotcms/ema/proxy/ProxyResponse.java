@@ -1,4 +1,4 @@
-package com.dotcms.spa.proxy;
+package com.dotcms.ema.proxy;
 
 public class ProxyResponse {
 

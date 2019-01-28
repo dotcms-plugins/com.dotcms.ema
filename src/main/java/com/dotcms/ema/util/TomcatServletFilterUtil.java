@@ -1,4 +1,4 @@
-package com.dotcms.spa.util;
+package com.dotcms.ema.util;
 
 import java.lang.reflect.Field;
 

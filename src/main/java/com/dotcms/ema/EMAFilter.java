@@ -1,4 +1,4 @@
-package com.dotcms.spa;
+package com.dotcms.ema;
 
 import java.io.IOException;
 import java.util.Map;
@@ -15,8 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.dotcms.business.CloseDBIfOpened;
-import com.dotcms.spa.proxy.ProxyResponse;
-import com.dotcms.spa.proxy.ProxyTool;
+import com.dotcms.ema.proxy.ProxyResponse;
+import com.dotcms.ema.proxy.ProxyTool;
 import com.dotmarketing.beans.Host;
 import com.dotmarketing.business.APILocator;
 import com.dotmarketing.business.web.UserWebAPI;
@@ -31,7 +31,7 @@ import com.dotmarketing.util.json.JSONObject;
 import com.google.common.collect.ImmutableMap;
 import com.liferay.portal.model.User;
 
-public class SPAFilter implements Filter {
+public class EMAFilter implements Filter {
 
     public static final String PROXY_EDIT_MODE_URL_VAR = "proxyEditModeUrl";
 
@@ -94,7 +94,7 @@ public class SPAFilter implements Filter {
 
     @Override
     public void destroy() {
-        Logger.info(SPAFilter.class.getName(), "destroy:" + this.getClass().getName());
+        Logger.info(EMAFilter.class.getName(), "destroy:" + this.getClass().getName());
     }
 
 
