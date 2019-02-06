@@ -75,10 +75,12 @@ public class EMAWebInterceptor  implements WebInterceptor{
 
                 if (pResponse.getResponseCode() == 200) {
                     responseStr = new String(pResponse.getResponse());
+                }else {
+                    responseStr="unable to connect with the rendering engine.  Trying: " + proxyUrl.get();
                 }
 
                 json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
-
+                json.getJSONObject("entity").getJSONObject("page").put("remoteRendered", true);
                 response.setContentType("application/json");
 
                 response.getWriter().write(json.toString());

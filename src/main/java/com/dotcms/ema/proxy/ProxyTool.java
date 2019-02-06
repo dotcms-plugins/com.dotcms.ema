@@ -275,7 +275,7 @@ public class ProxyTool {
             }
 
         } catch (Exception e) {
-            Logger.error(this, "Exception posting to url: " + url, e);
+            Logger.warn(this, "Exception posting to url: " + url);
             return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null);
         }
 
