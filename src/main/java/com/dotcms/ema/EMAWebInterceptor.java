@@ -65,30 +65,37 @@ public class EMAWebInterceptor  implements WebInterceptor{
         try {
 
             if (response instanceof MockHttpCaptureResponse) {
-
+                
                 final Optional<String> proxyUrl            = proxyUrl(request);
                 final MockHttpCaptureResponse mockResponse = (MockHttpCaptureResponse)response;
                 final String postJson                      = new String(mockResponse.getBytes());
                 final JSONObject json                      = new JSONObject(postJson);
                 final Map<String, String> params           = ImmutableMap.of("dotPageData", postJson);
-
-                String responseStr = null;
+                
+                Logger.info(this.getClass(), "Proxying Request -->" + proxyUrl.get());
+                
+                String responseStr = new String();
                 final ProxyResponse pResponse = proxy.sendPost(proxyUrl.get(), params);
 
                 if (pResponse.getResponseCode() == 200) {
                     responseStr = new String(pResponse.getResponse());
                 }else {
-                    responseStr="<h3>Unable to connect with the rendering engine</h3>";
-                    responseStr+="<br>Trying: <pre>" + proxyUrl.get()  + "</pre>";
-                    responseStr+="<br>got : <pre>" + pResponse.getStatus() + "</pre>";
+                    responseStr+="<html><body>";
+                    responseStr+="<h3>Unable to connect with the rendering engine</h3>";
+                    responseStr+="<br><div style='display:inline-block;width:80px'>Trying: </div><b>" + proxyUrl.get()  + "</b>";
+                    responseStr+="<br><div style='display:inline-block;width:80px'>Got:</div><b>" + pResponse.getStatus() + "</b>";
                     responseStr+="<hr>";
+                    responseStr+="<h4>Headers</h4>";
                     responseStr+="<table border=1 style='min-width:500px'>";
-                    responseStr+="<tr><th colspan=2>Headers</th></tr>";
+
                     for(Header header : pResponse.getHeaders()) {
                       responseStr+="<tr><td style='font-weight:bold;padding:5px;'><pre>" + header.getName() + "</pre></td><td><pre>" + header.getValue() + "</td></tr>";
                     }
                     responseStr+="</table>";
                     
+                    responseStr+="<p>The Json Payload, POSTing as Content-Type:'application/x-www-form-urlencoded' with form param <b>dotPageData</b>, has been printed in the logs.</p>";
+                    responseStr+="</body></html>";
+
                 }
 
                 json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
