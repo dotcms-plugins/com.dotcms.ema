@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.http.Header;
+
 import com.dotcms.business.CloseDBIfOpened;
 import com.dotcms.ema.proxy.MockHttpCaptureResponse;
 import com.dotcms.ema.proxy.ProxyResponse;
@@ -76,7 +78,17 @@ public class EMAWebInterceptor  implements WebInterceptor{
                 if (pResponse.getResponseCode() == 200) {
                     responseStr = new String(pResponse.getResponse());
                 }else {
-                    responseStr="unable to connect with the rendering engine.  Trying: " + proxyUrl.get();
+                    responseStr="<h3>Unable to connect with the rendering engine</h3>";
+                    responseStr+="<br>Trying: <pre>" + proxyUrl.get()  + "</pre>";
+                    responseStr+="<br>got : <pre>" + pResponse.getStatus() + "</pre>";
+                    responseStr+="<hr>";
+                    responseStr+="<table border=1 style='min-width:500px'>";
+                    responseStr+="<tr><th colspan=2>Headers</th></tr>";
+                    for(Header header : pResponse.getHeaders()) {
+                      responseStr+="<tr><td style='font-weight:bold;padding:5px;'><pre>" + header.getName() + "</pre></td><td><pre>" + header.getValue() + "</td></tr>";
+                    }
+                    responseStr+="</table>";
+                    
                 }
 
                 json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);

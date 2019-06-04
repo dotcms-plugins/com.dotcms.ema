@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.http.Header;
 import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -87,7 +89,7 @@ public class ProxyTool {
             entity = new StringEntity(data, ContentType.create(contentType, "UTF-8"));
         } catch (Exception e) {
             Logger.error(this, "Exception creating RequestEntity for: " + url, e);
-            return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null);
+            return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null, new Header[0]);
         }
 
         CloseableHttpClient client;
@@ -106,10 +108,10 @@ public class ProxyTool {
             m.setEntity(entity);
             try {
                 CloseableHttpResponse r = client.execute(m);
-                return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
             } catch (Exception e) {
                 Logger.error(this, "Exception posting to url: " + url, e);
-                return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null);
+                return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null, new Header[0]);
             } finally {
                 if (method != null) {
                     m.releaseConnection();
@@ -120,10 +122,10 @@ public class ProxyTool {
             m.setEntity(entity);
             try {
                 CloseableHttpResponse r = client.execute(m);
-                return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
             } catch (Exception e) {
                 Logger.error(this, "Exception posting to url: " + url, e);
-                return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null);
+                return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null, null);
             } finally {
                 if (method != null) {
                     m.releaseConnection();
@@ -131,7 +133,7 @@ public class ProxyTool {
             }
         } else {
             Logger.error(this, "Unimplemented Method: " + method);
-            return new ProxyResponse(ERR_CODE_UNIMPLEMENTED_METHOD, null);
+            return new ProxyResponse(ERR_CODE_UNIMPLEMENTED_METHOD, null, null);
         }
 
     }
@@ -242,41 +244,46 @@ public class ProxyTool {
         
             
             System.out.println( method  + " " + url);
+            
             if (method.equalsIgnoreCase(METHOD_POST)) {
                 HttpPost m = new HttpPost(url);
+                m.setHeader("Content-Type", "application/json");
+                
+
                 m.setEntity(entity);
                 try(CloseableHttpResponse r = client.execute(m)){
-                    return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                    StatusLine status =r.getStatusLine();
+                    return new ProxyResponse(status, EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else if (method.equalsIgnoreCase(METHOD_PUT)) {
                 HttpPut m = new HttpPut(url);
                 m.setEntity(entity);
                 try(CloseableHttpResponse r = client.execute(m)){
-                    return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                    return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else if (method.equalsIgnoreCase(METHOD_HEAD)) {
                 HttpHead m = new HttpHead(url + urlParamsSB.toString());
                 try(CloseableHttpResponse r = client.execute(m)){
-                    return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                    return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else if (method.equalsIgnoreCase(METHOD_DELETE)) {
                 HttpDelete m = new HttpDelete(url + urlParamsSB.toString());
                 try(CloseableHttpResponse r = client.execute(m)){
-                    return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                    return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else if (method.equalsIgnoreCase(METHOD_GET)) {
                 HttpGet m = new HttpGet(url + urlParamsSB.toString());
                 try(CloseableHttpResponse r = client.execute(m)){
-                    return new ProxyResponse(r.getStatusLine().getStatusCode(), EntityUtils.toByteArray(r.getEntity()));
+                    return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else {
                 Logger.error(this, "Unimplemented Method: " + method);
-                return new ProxyResponse(ERR_CODE_UNIMPLEMENTED_METHOD, null);
+                return new ProxyResponse(ERR_CODE_UNIMPLEMENTED_METHOD, null, new Header[0]);
             }
 
         } catch (Exception e) {
             Logger.warn(this, "Exception posting to url: " + url);
-            return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null);
+            return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null, new Header[0]);
         }
 
     }

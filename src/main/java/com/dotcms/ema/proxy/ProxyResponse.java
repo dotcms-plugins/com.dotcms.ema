@@ -1,32 +1,59 @@
 package com.dotcms.ema.proxy;
 
+import org.apache.http.Header;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
+
 public class ProxyResponse {
 
+  /**
+   * The Response.
+   */
+  final private byte[] response;
+  final private StatusLine status;
+  final private int responseCode;
+  final private Header[] headers;
 
-    /**
-     * The Response.
-     */
-    final private byte[] response;
+  public ProxyResponse(StatusLine status, byte[] out, Header[] headers) {
+    this.response = out;
+    this.status = status;
+    this.responseCode = status.getStatusCode();
+    this.headers = headers;
+  }
 
-    /**
-     * The Response Code.
-     */
-    final int responseCode;
+  public ProxyResponse(final int responseCode, byte[] out, Header[] headers) {
+    this(new StatusLine() {
+      @Override
+      public int getStatusCode() {
+        return responseCode;
+      }
 
-    public ProxyResponse(int rc, byte[] out) {
-        this.response = out;
-        this.responseCode = rc;
-    }
+      @Override
+      public String getReasonPhrase() {
+        return "unknown error";
+      }
 
-    public byte[] getResponse() {
-        return this.response;
-    }
+      @Override
+      public ProtocolVersion getProtocolVersion() {
+        return null;
+      }
+    }, out, headers);
 
-    public int getResponseCode() {
-        return this.responseCode;
-    }
+  }
 
+  public byte[] getResponse() {
+    return this.response;
+  }
 
+  public int getResponseCode() {
+    return (status != null) ? status.getStatusCode() : responseCode;
+  }
 
+  public StatusLine getStatus() {
+    return this.status;
+  }
 
+  public Header[] getHeaders() {
+    return (headers != null) ? headers : new Header[0];
+  }
 }
