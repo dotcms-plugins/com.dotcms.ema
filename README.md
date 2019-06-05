@@ -8,10 +8,13 @@ This plugin intercepts EDIT_MODE API calls in the backend of dotCMS and proxies 
 4. When accepting these POSTs, add the additional markup dotCMS requires to enable edit mode.  
 
 ### How it works
-When dotCMS receives an edit mode request for a page on a site with EMA support, dotCMS will `POST` all page data including the template, containers, layout and contents on the page to your EMA site (example payload found at the endpoint /api/v1/page/json/{path}).  dotCMS `POSTs` this payload to your EMA renderer as `application/x-www-form-urlencoded` with the page data json in the parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed data, parse the `dotPageData` param and use it to statically render the App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+When dotCMS receives an edit mode request for a page on a site with EMA support, dotCMS will `POST` all page data including the template, containers, layout and contents on the page to your EMA site (example payload found at the endpoint `/api/v1/page/json/{path}`).  dotCMS `POSTs` this payload to your EMA renderer as `application/x-www-form-urlencoded` with the page data json in the parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed data, parse the `dotPageData` param and use it to statically render the App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+
+### Build and install the plugin
+The EMA plugin is an OSGI based plugin.  To install this plugin all you need to do is build the JAR. To do this, clone this repo and run: `./gradlew jar`.  This will build two jars in the `./build/libs` directory: a bundle fragment (needed to expose 3rd party libraries to dotCMS) and the plugin jar.   Once built, copy the bundle jar files found in the `./build/libs` to your dotCMS's Felix load folder, found under `/dotserver/tomcat-x.xx/webapps/ROOT/WEB-INF/felix/load` or easier, just upload the bundle jars files using the dotCMS UI `> Developer Tools > Dynamic Plugins > Upload Plugin`.
 
 ### How to enable
-In dotCMS EMA suport can be enabled at the host level.  In order to do this, you need to add a text field to your host content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  In this you add the full url to your rendering server that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled.  If you are using SSL (and you should be), make sure that the certificate on the rendering server is valid or that the java install you are using to run dotCMS has the rendering server's cert installed and trusted in the java keystore.
+Once installed, dotCMS EMA suport is enabled at the host level.  When the EMA plugin was installed, it adds a text field to your Site content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  Go to `> System > Sites` and click on the Site you want to enable EMA on. Find the "Proxy Edit Mode URL" field and add the full url, e.g. https://your-react-app.com:8443/editMode to your rendering server and endpoint that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled for the host.  If you are using SSL (and you should be), make sure that the certificate on the rendering server is valid or that the java install you are using to run dotCMS has the rendering server's cert installed and trusted in the java keystore.
 
 ### Payload in EMA
 ```json
@@ -214,26 +217,5 @@ In dotCMS EMA suport can be enabled at the host level.  In order to do this, you
 ```
 
 
-## How to build this example
 
-To install all you need to do is build the JAR. to do this run
-`./gradlew jar`
-
-This will build two jars in the `build/libs` directory: a bundle fragment (in order to expose needed 3rd party libraries from dotCMS) and the plugin jar 
-
-* **To install this bundle:**
-
-    Copy the bundle jar files inside the Felix OSGI container (*dotCMS/felix/load*).
-        
-    OR
-        
-    Upload the bundle jars files using the dotCMS UI (*CMS Admin->Dynamic Plugins->Upload Plugin*).
-
-* **To uninstall this bundle:**
-    
-    Remove the bundle jars files from the Felix OSGI container (*dotCMS/felix/load*).
-
-    OR
-
-    Undeploy the bundle jars using the dotCMS UI (*CMS Admin->Dynamic Plugins->Undeploy*).
 
