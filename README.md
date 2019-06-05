@@ -1,10 +1,19 @@
 # Edit Mode Anywhere - EMA
 
-This plugin intercepts EDIT_MODE API calls in the backend of dotCMS and proxies them to another site/server (hosted elsewhere) to render the EDIT_MODE request.  To enable Edit Mode Anywhere , your app should do a static/isomorphic rendering of the app at a given page route and 2) add the additional markup dotCMS requires to enable edit mode.  In dotCMS EMA suport can be enabled at the host level.  In order to do this, you need to add a text field to your host content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  In this you add the full url to your rendering server that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled.
+This plugin intercepts EDIT_MODE API calls in the backend of dotCMS and proxies them to another site/server (hosted elsewhere) to render the EDIT_MODE request.  To enable Edit Mode Anywhere, your app should:
 
-When dotCMS receives an edit mode request for a page on a site with EMA support, dotCMS will post the data found at the endpoint /api/v1/page/json/{path} which is a json data object of the layout and contents on the page.  dotCMS will `POST` that payload to your EMA renderer at the url with the variable `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed data and use it to statically render the App in that state our route, which dotCMS will read and return to edit mode.
+1. Be built to read and deliver dotCMS Page and content as a Service information for specific pages/routes 
+2. Be able to do a static/isomorphic rendering of your app at a given page route 
+3. Be able to accept POSTs to handle and render the Page as a Service JSON information coming from dotCMS EDIT MODE
+4. When accepting these POSTs, add the additional markup dotCMS requires to enable edit mode.  
 
-## Payload in EMA
+### How it works
+When dotCMS receives an edit mode request for a page on a site with EMA support, dotCMS will `POST` all page data including the template, containers, layout and contents on the page to your EMA site (example payload found at the endpoint /api/v1/page/json/{path}).  dotCMS `POSTs` this payload to your EMA renderer as `application/x-www-form-urlencoded` with the page data json in the parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed data, parse the `dotPageData` param and use it to statically render the App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+
+### How to enable
+In dotCMS EMA suport can be enabled at the host level.  In order to do this, you need to add a text field to your host content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  In this you add the full url to your rendering server that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled.  If you are using SSL (and you should be), make sure that the certificate on the rendering server is valid or that the java install you are using to run dotCMS has the rendering server's cert installed and trusted in the java keystore.
+
+### Payload in EMA
 ```json
 {
 	"layout": {
