@@ -2,6 +2,7 @@ package com.dotcms.ema.proxy;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -226,7 +227,7 @@ public class ProxyTool {
             }
             for (Entry<String, String> e : params.entrySet()) {
                 data.add(new BasicNameValuePair(e.getKey(), e.getValue()));
-                urlParamsSB.append(appender + e.getKey() + "=" + e.getValue());
+                urlParamsSB.append(appender + e.getKey() + "=" + URLEncoder.encode(e.getValue()));
                 appender = "&";
             }
             UrlEncodedFormEntity entity = new UrlEncodedFormEntity(data, Charset.forName("UTF-8"));
@@ -272,7 +273,7 @@ public class ProxyTool {
                     return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
             } else if (method.equalsIgnoreCase(METHOD_GET)) {
-                HttpGet m = new HttpGet(url + urlParamsSB.toString());
+                HttpGet m = new HttpGet(url );
                 try(CloseableHttpResponse r = client.execute(m)){
                     return new ProxyResponse(r.getStatusLine(), EntityUtils.toByteArray(r.getEntity()), r.getAllHeaders());
                 }
@@ -282,7 +283,8 @@ public class ProxyTool {
             }
 
         } catch (Exception e) {
-            Logger.warn(this, "Exception posting to url: " + url);
+            Logger.warn(this, "Exception "+ method +" to url: " + url);
+            Logger.warn(this, e.getMessage(),e);
             return new ProxyResponse(ERR_CODE_UNKNOWN_ERR, null, new Header[0]);
         }
 

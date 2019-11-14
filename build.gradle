@@ -11,9 +11,7 @@ repositories {
 
 dependencies {
     compile('com.dotcms:dotcms:5.2.0')
-
     compile 'org.apache.tomcat:tomcat-catalina:8.5.24'
-
 }
 
 import java.util.jar.*

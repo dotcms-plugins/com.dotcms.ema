@@ -1,21 +1,25 @@
 package com.dotcms.ema;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-
+import org.apache.velocity.context.Context;
 import com.dotcms.business.CloseDBIfOpened;
 import com.dotcms.ema.proxy.MockHttpCaptureResponse;
 import com.dotcms.ema.proxy.ProxyResponse;
 import com.dotcms.ema.proxy.ProxyTool;
 import com.dotcms.filters.interceptor.Result;
 import com.dotcms.filters.interceptor.WebInterceptor;
+import com.dotcms.rendering.velocity.util.VelocityUtil;
 import com.dotmarketing.beans.Host;
 import com.dotmarketing.business.APILocator;
 import com.dotmarketing.business.web.UserWebAPI;
@@ -28,6 +32,7 @@ import com.dotmarketing.util.WebKeys;
 import com.dotmarketing.util.json.JSONObject;
 import com.google.common.collect.ImmutableMap;
 import com.liferay.portal.model.User;
+import io.vavr.Function0;
 
 public class EMAWebInterceptor  implements WebInterceptor{
 
@@ -64,6 +69,10 @@ public class EMAWebInterceptor  implements WebInterceptor{
 
         try {
 
+
+            
+            
+            
             if (response instanceof MockHttpCaptureResponse) {
                 
                 final Optional<String> proxyUrl            = proxyUrl(request);
@@ -74,9 +83,23 @@ public class EMAWebInterceptor  implements WebInterceptor{
                 
                 Logger.info(this.getClass(), "Proxying Request -->" + proxyUrl.get());
                 
-                String responseStr = new String();
-                final ProxyResponse pResponse = proxy.sendPost(proxyUrl.get(), params);
+                
+               // String template = proxyVtl.apply();
+               // String template =loadProxyVtl();
+                
+                Context context = VelocityUtil.getWebContext(request, response);
+                context.put("proxyUrl", proxyUrl.get());
+                context.put("jsonStr", json);
+                
+                
+                String responseStr =null;
+                final ProxyResponse pResponse = proxy.send(proxyUrl.get(), params);
+         
 
+                
+                
+                
+                
                 if (pResponse.getResponseCode() == 200) {
                     responseStr = new String(pResponse.getResponse());
                 }else {
@@ -97,6 +120,7 @@ public class EMAWebInterceptor  implements WebInterceptor{
                     responseStr+="</body></html>";
 
                 }
+             
 
                 json.getJSONObject("entity").getJSONObject("page").put("rendered", responseStr);
                 json.getJSONObject("entity").getJSONObject("page").put("remoteRendered", true);
@@ -175,6 +199,41 @@ public class EMAWebInterceptor  implements WebInterceptor{
         }
     }
 
+    private Function0<String> proxyVtl = Function0.of(this::loadProxyVtl).memoized();
+    
+    
+    private String loadProxyVtl() {
+        
+        final String fileurl = new File("/Users/will/git/dotcms5/osgi/com.dotcms.ema/src/main/resources/proxy.vtl").exists()
+                        ? "/Users/will/git/dotcms5/osgi/com.dotcms.ema/src/main/resources/proxy.vtl"
+                        : "/proxy.vtl";
+            
+        try {
+            try (InputStream in = this.getClass().getResourceAsStream(fileurl)) {
+                if(in==null) {
+                    try(InputStream in2  =new FileInputStream(new File(fileurl) )) {
+                        return IOUtils.toString(in2, StandardCharsets.UTF_8);
+                    }
+                }
+                return IOUtils.toString(in, StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            throw new DotRuntimeException(e);
+        }
 
+    }
+    
+    
+    String[] gatsbyProxyPaths = new String[] { "/gatsby",
+            "/commons.js",
+            "/socket.io",
+            "/page-data",
+            "/manifest.webmanifest",
+            "/__webpack_hmr",
+            "/0.js",
+            "/1.js",
+            "/2.js"};
+    
+    
 
 }
