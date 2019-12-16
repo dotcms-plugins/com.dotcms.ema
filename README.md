@@ -7,10 +7,10 @@ This plugin enables content management for SPAs (Single Page Apps) or remote app
 4. When accepting these POSTs, add the additional markup dotCMS requires to enable edit mode.  
 
 ### How it works
-When dotCMS receives an edit mode request for a page on a site with EMA support, dotCMS will `POST` the "Page as a Service" data including the template, containers, layout and contents on the page to your EMA site (example payload found at the endpoint `/api/v1/page/json/{path}`).  dotCMS `POSTs` this payload to your EMA renderer with the content type  of `application/x-www-form-urlencoded` and the "Page as a Service" data json in the parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed data, parse the `dotPageData` param and use it to statically render your App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+The EMA plugin acts like a Servlet Filter listening for "Edit Mode" requests.  When the plugin receives an edit mode request for a page on a site with EMA support, it will `POST` the Page API data/context including the template, containers, layout , content and vistor information to your SPA or remote site (example payload found at the endpoint `/api/v1/page/json/{path}`).  dotCMS `POSTs` this payload to your SPA or remote site renderer with the content type  of `application/x-www-form-urlencoded` and the Page API data as a json string as the form parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed parameter, parse the `dotPageData` param and use it to statically render your App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
 
 ## Routes
-dotCMS EMA supports two kinds of routes -  page routes and slug routes.  This is because the page API supports both page urls and slug urls, and when a link is followed in the dotCMS SPA, the page API data is just requested based on the url being managed . Both these are valid API requests for page data
+dotCMS EMA supports two kinds of routes -  page routes and slug routes.  This works because dotCMS is a hybrid system and the page API supports requests for page data using real page urls, which can include page urls and slug urls. This means that both of these are valid API requests for page data
 ```https://demo.dotcms.com/api/v1/page/json/about-us/index```
 and
 ```https://demo.dotcms.com/api/v1/page/json/blogs/your-blog-slug-url-mapped-title```
@@ -18,10 +18,10 @@ and
 ### Slug Content
 When a slug route is requested dotCMS will include the slug content for the route in a property called `urlContentMap`, which  contains the entire slug mapped content for that route.
 
+> Note: While page routes can have distinct, manageable content and layouts, slug routes generally cannot. Changes made to a page routes' layouts/content will only affect the page being edited.  This is different for slug based routes.  Because all slug content of a type shares the same detail page, changes made to the slug detail page/layout will affect all the slug routes for that specific content type.  
+
 ### Adding/Removing Routes
 To add a new route for an SPA in dotCMS all you need to do is add a page or a new Slug based content.  The new route will automatically be included in calls to the Navigation API and or the content apis which dictation valid routes for your application.  Unpublishing/deleting a route will automatically remove the route from your SPA/app
-
-> Note: While page routes can have distinct, manageable content and layouts, slug routes generally cannot. Changes made to a page routes' layouts/content will only affect the page being edited.  This is different for slug based routes.  Because all slug content of a type shares the same detail page, changes made to the slug detail page/layout will affect all the slug routes for that specific content type.  
 
 ## Edit Mode JS Events
 dotCMS expects certian events to fire actions while in Edit Mode.  These are important if you want to build a custom application or SPA that supports Edit Mode Anywhere.  These include:
@@ -37,11 +37,17 @@ This opens a contentlet up for editing in a modal editor window.
 
 4. ...TBD
 
+## Live mode vs. Preview Mode
+todo
+
+
+
+
 ## EMA Limitations
-Current implementaion requires an authoring environment that is capible of handling the POSTed Page api data.  Our current dotCMS SPA implementaion requires server side / isomorphic rendering to be installed in the authoring environment. This server side implementation accpets the posted data and wraps the content objects in the SPA with specific custom components that add attributes dotCMS looks for when rendering a page in edit mode.  Some version of this would likely be a requirement for any 3rd party SPAs or apps looking to support EMA.
+The current EMA implementaion requires an authoring environment that is capible of handling POSTed Page API data.  As of now, this requires at least a node server with server side / isomorphic rendering to be installed in the authoring environment.   By way of example, our dotCMS SPA starter uses NextJS to act as the server side implementation.  It accepts the Page API  the posted data and wraps the included content objects in the SPA with specific custom components that add attributes dotCMS reads for when rendering a page in edit mode.  Some version of this pattern would likely be a requirement for any 3rd party SPAs or apps looking to support EMA.
 
 
-#Installation
+# Installation
 
 ### Build and install the plugin
 The EMA plugin is an OSGI based plugin.  To install this plugin all you need to do is build the JAR. To do this, clone this repo, `git clone https://github.com/dotcms-plugins/com.dotcms.ema` cd into the cloned directory and run: `./gradlew jar`.  This will build two jars in the `./build/libs` directory: 
@@ -49,5 +55,5 @@ The EMA plugin is an OSGI based plugin.  To install this plugin all you need to 
 2. the plugin jar.   
 Once built, copy the bundle jar files found in the `./build/libs` to your dotCMS's Felix load folder, found under `/dotserver/tomcat-x.xx/webapps/ROOT/WEB-INF/felix/load` or easier, just upload the bundle jars files using the dotCMS UI `> Developer Tools > Dynamic Plugins > Upload Plugin`.
 
-### How to enable
-Once installed, dotCMS EMA suport is enabled at the host level.  When the EMA plugin was installed, it adds a text field to your Site content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  Go to `> System > Sites` and click on the Site you want to enable EMA on. Find the "Proxy Edit Mode URL" field and add the full url, e.g. https://your-react-app.com:8443/editMode to your rendering server and endpoint that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled for the host.  If you are using SSL (and you should be), make sure that the certificate on the rendering server is valid or that the java install you are using to run dotCMS has the rendering server's cert installed and trusted in the java keystore.
+### Enable the plugin
+Once installed, dotCMS EMA suport is enabled at the host level.  When the EMA plugin was installed, it adds a field to your Site content type called "Proxy Edit Mode URL" with a variable name : `proxyEditModeUrl`.  Go to `> System > Sites` and click on the Site you want to enable EMA on. Find the "Proxy Edit Mode URL" field and add the full url, e.g. https://your-react-app.com:8443/editMode to your rendering server and endpoint that dotCMS will be proxying the request to, including the port.  If this value is not set, EMA support is disabled for the host.  If you are using SSL (and you should be), make sure that the certificate on the rendering server is valid or that the java install you are using to run dotCMS has the rendering server's cert installed and trusted in the java keystore.
