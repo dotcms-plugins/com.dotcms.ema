@@ -1,13 +1,16 @@
 # dotCMS Edit Mode Anywhere - EMA
-This plugin enables content management for SPAs (Single Page Apps) or remote apps (.NET, php) that have been built to pull content from dotCMS.  The plugin intercepts a user's dotCMS EDIT_MODE API calls in the backend of dotCMS, POSTs the dotCMS page API data to another site/server (hosted elsewhere) and then proxies the remote response back to the dotCMS user, which allows dotCMS to render the EDIT_MODE request.  To enable Edit Mode Anywhere, your app should:
+This plugin enables content management for SPAs (Single Page Apps) or remote apps (.js, .NET, php) that have been built to pull content from dotCMS.  The plugin intercepts a content managers's request to dotCMS EDIT_MODE in the admin of dotCMS, transparently POSTs the dotCMS page API data to the remote site/server (hosted elsewhere) and then proxies the remote response back to the dotCMS admin, which allows dotCMS to render the EDIT_MODE request in context.  To enable Edit Mode Anywhere, your app should:
 
-1. Be built to read and deliver dotCMS Page and content as a Service information for specific pages/routes 
+1. Be built to read and deliver dotCMS Page and content as a Service information for specific sections/pages/routes 
 2. Be able to do a static/isomorphic rendering of your app at a given page route 
-3. Be able to accept POSTs, which can  handle and render the Page as a Service JSON information coming from dotCMS EDIT MODE
+3. Be able to accept POSTs, which can  handle and render the Page API json information coming from dotCMS EDIT MODE
 4. When accepting these POSTs, add the additional markup dotCMS requires to enable edit mode.  
 
 ### How it works
-The EMA plugin acts like a Servlet Filter listening for "Edit Mode" requests.  When the plugin receives an edit mode request for a page on a site with EMA support, it will `POST` the Page API data/context including the template, containers, layout , content and vistor information to your SPA or remote site (example payload found at the endpoint `/api/v1/page/json/{path}`).  dotCMS `POSTs` this payload to your SPA or remote site renderer with the content type  of `application/x-www-form-urlencoded` and the Page API data as a json string as the form parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed parameter, parse the `dotPageData` param and use it to statically render your App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+The EMA plugin acts like a Servlet Filter listening calls for a page in "Edit Mode".  When the plugin receives an edit mode request for a page on a site with EMA support, it will `POST` the Page API data/context including the template, containers, layout , content and vistor information to your SPA or remote site.  For reference, the EMA payload is the same as what is returned from  the page endpoint `/api/v1/page/json/{path}`.  dotCMS `POSTs` this payload to your SPA or remote site renderer with the content type  of `application/x-www-form-urlencoded` and the Page API data as a json string as the form parameter `dotPageData`.  The remote application or SPA needs to be built to accept this POSTed parameter, parse the `dotPageData` param and use it to statically render your App server-side in that state our route.  dotCMS will read this rendered state/html and return it to edit mode.
+
+
+
 
 ## Routes
 dotCMS EMA supports two kinds of routes -  page routes and slug routes.  This works because dotCMS is a hybrid system and the page API supports requests for page data using real page urls, which can include page urls and slug urls. This means that both of these are valid API requests for page data
