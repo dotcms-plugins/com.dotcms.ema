@@ -67,25 +67,30 @@ dotcms-field-elements
 ```
 respectively.  The `dotcms` library simplifies using dotCMS Content, navigation and page APIs.  The dotcms-ema-elements
 
-## Live Content vs. Previewing Unpublished Content
-dotCMS requires an API key to access content and pages stored in dotCMS.  These dotCMS API keys can be generated from the command line or from the backend of dotCMS from the User Manager screen.  In dotCMS, an API key grants the permissions of the user to which they are issued, including permissions tied to any roles that the user might have.  
+## Live Content vs. Previewing Content
+dotCMS requires an API key to access content and pages stored in dotCMS.  These dotCMS API keys can be generated from the command line or from the backend of dotCMS from the User Manager screen.  In dotCMS, an API key grants the permissions of the user to which they are issued, including permissions tied to any roles that the user might have.  All content and API calls are permission-based and will return differently based on the key's user permissions.  
 
-API keys dictate whether unpublished content can be previewed.  If the key is generated for a "Front End" user (as is visible in the User Manager) then that key will only be able to view and access published/live front-end content, which includes content that has CMS Anonymous access set to READ.  If the key is generated for a "Back End" user, then the key will enable preview access to unpublished/working content as well based on the back end user permission to access to such content.  
-
-
-## Authentication Strategies
-Setting up preview vs. production environments for API only access presents some challenges, though there are a number of strategies you can use to secure your preview environments.  If your content is not sensitive and assuming your preview environment is only accessable by trusted visitors, it is possible to create a limited, read-only user in dotCMS and use them to create an api key or `.env` file for your preview environment.  This api key would be shared across all preview requests though it will also be discoverable by anyone who accesses your preview environment.  
-
-Another more involved strategy would be to force users to authenticate against dotCMS before they can access the preview url. dotCMS provides an authentication api that could be used to authenticate users before they can view any content.  The authenticated user would then be granted the permissions based on their dotCMS permissions.  
+dotCMS has the concept of "Front End" users and "Back End" users.  Front end users can only see live/published content. Back end users can preview drafted/unpublished content. This means that if an API key is generated for a "Front End" user (a checkbox in the User's Account) then that key will only be able to view and access published/live front-end content (this includes content that has CMS Anonymous access set to READ).  If an API key is generated for a "Back End" user (again, a checkbox in the User's Account), then that key will enable preview access to unpublished/working content based on the "Back End" user's permissions.
 
 
+## API Authentication Strategies
+Setting up preview vs. production environments for API only access presents some challenges, though there are a number of strategies you can use to secure your environments.  
+
+### Viewing Live Content : a Single Key
+For publically accessable and read only sites, an API key can be generated for a front-end user and embedded in an app or SPA that is used to make the API requests.  While the embedded API key would be discoverable by a snooping web developer, it only grants read access to public content and is not unlike anonymous read access on any web property.  
+
+### Previewing Content : a Single Key
+If your content is not sensitive and your preview environment is only accessable by trusted visitors, the same strategy can be used to create a "Preview" user key in dotCMS.  To do this, you create a limited back-end user in dotCMS and with them generate an api key or `.env` file for your preview environment. While this back-end api key is easy to use, it has the significant downside that it will also be discoverable by anyone who can access your preview environment.  That said, the risks of this approach might be acceptable if simplicity is important, the content is not overly sensitive and the keys' permissions are limited only to reads and/or specific pages or content types.
+
+### Previewing Content : dotCMS Auth before 
+A more involved strategy requires users to authenticate against dotCMS or another 3rd party authentication system before they access the preview url.  Out of the box, dotCMS provides an authentication api that could be used to authenticate users before they can view any content. The api call below authenticates joe@dotcms.com user and sets a cookie on the user's browser which is then used to authenticate further dotCMS API calls.  The authenticated user's browser passes this cookie with each API request and is granted the permissions based on their dotCMS permissions. 
 ```
 curl 'https://demo.dotcms.com/api/v1/authentication' -v \
 -H 'Content-Type: application/json' \
 --data-binary ' 
    {
-     "userId":"admin@dotcms.com",
-     "password":"admin",
+     "userId":"joe@dotcms.com",
+     "password":"joe",
      "rememberMe":true,
      "language":"en",
      "country":"US"
@@ -93,7 +98,8 @@ curl 'https://demo.dotcms.com/api/v1/authentication' -v \
 ' 
 ```
 
-Another strategy would be to use a 3rd party authentication mechanism, OAUTH or SAML, and map the newly authenticated user based on a token passed to dotCMS. dotCMS provides both an OAuth and SAML plugins to do just that.
+### Previewing Content : 3rd Parth Auth before 
+dotCMS can also integrate with 3rd party authentication mechanisms such as OAUTH, SAML or AD.  When an unauthenticaed user accesses the preview site, they are redirected to the 3rd party authentication mechinism.  Once authenticated there, they are returned to your app with a token or a cookie they can pass to dotCMS, which will validate the token against the 3rd party and map the newly authenticated user to a user in dotCMS. dotCMS provides both an OAuth and SAML plugins to do just this.
 
 
 
